@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 #
-VERSION="2.0.0"
+VERSION="2.0.1"
 echo "Adding Fe-Pi dtoverlay if needed..."
 CONFIG_="/boot/config.txt"
 if ! grep -q "^dtoverlay=fe-pi-audio" $CONFIG_
@@ -20,4 +20,5 @@ echo >&2 "Done."
 #echo >&2 "Restarting pulseaudio..."
 #systemctl --user restart pulseaudio 
 #echo >&2 "Done."
+exit 0
 
