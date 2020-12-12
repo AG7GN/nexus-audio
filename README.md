@@ -8,13 +8,13 @@ Raspbian's embrace of PulseAudio as of early December 2020 brought significant c
 
 The Nexus DR-X image has always used PulseAudio to support simultaneous use of left and right radios with a single Fe-Pi audio board. Now that the OS *also* uses PulseAudio, some changes to the default PulseAudio configuration were needed to make things operate as they were before. 
 
-As of early December 2020, by default PulseAudio is configured to automatically detect sound devices attached to the Pi. This works fine for the built in analog (the TRS or headphone jack built in to the Pi) and digital (audio output from the HDMI ports on the Pi). However, PulseAudio fails epically when it comes to setting up the Fe-Pi audio board correctly.
+As of early December 2020, by default PulseAudio is configured to automatically detect sound devices attached to the Pi. This works fine for the built in analog (the TRS or headphone jack built in to the Pi) and digital (audio output from the HDMI ports on the Pi). However, PulseAudio fails spectacularly when it comes to setting up the Fe-Pi audio board.
 
-To rectify this, I sought to find a solution that minimally affects the default PulseAudio configuration yet provides all the functionality we need to use the Fe-Pi audio card for ham radio applications.
+To rectify this, I finally arrived a solution that minimally affects the default PulseAudio configuration yet provides all the functionality we need to use the Fe-Pi audio card for ham radio applications.
 
 ## PulseAudio Modifications to Support Fe-Pi
 
-Three modifications are needed for PulseAudio to support the Fe-Pi.
+Three modifications are needed for PulseAudio to support the Fe-Pi and retain it's normal PulseAudio operation.
 
 ### 1. Tell PulseAudio to ignore the Fe-Pi when it's autodetecting audio interfaces
 
@@ -22,13 +22,13 @@ This is accomplished by adding a `/etc/udev/rules.d/89-pulseaudio-fepi.rules` fi
 
 	ATTRS{id}=="Audio", ENV{PULSE_IGNORE}="1"
 
-The `ATTRS{id}` looks for the string __Audio__. This ID is how the cards identify themselves to the OS. The Fe-Pi's ID is simply __Audio__.  When a match is made, it sets an environment variable `PULSE_IGNORE` to 1 ('true'). This tells PulseAudio to ignore cards that identify themselves as __Audio__ during PulseAudio's autodetect process when it starts.
+The `ATTRS{id}` looks for the string __Audio__. This ID is how the cards identify themselves to [ALSA](https://alsa-project.org/wiki/Main_Page). The Fe-Pi's ID is simply __Audio__.  When a match is made, it sets an environment variable `PULSE_IGNORE` to 1 ('true'). This tells PulseAudio to ignore cards that identify themselves as ALSA ID __Audio__ during PulseAudio's autodetect process.
 
 The `89` at the beginning of the file name is used to determine the order in which the rules are executed. PulseAudio's rules are stored in `/usr/lib/udev/rules.d/90-pulseaudio.rules` and `/usr/lib/udev/rules.d/91-pulseaudio-rpi.rules`. Note that rules installed as part of the application are stored in `/usr/lib/udev/rules.d/`. User rules are stored in `/etc/udev/rules.d/`.  Since our file starts with `89`, it is executed before regular PulseAudio rules, ensuring that PulseAudio will ignore the Fe-Pi.
 
-### 2. Manually configure the PulseAudio Fe-Pi settings after PulseAudio finishes autodetect
+### 2. Manually configure the PulseAudio Fe-Pi settings
 
-PulseAudio searches for it's configuration instructions in one of 2 places when PulseAudio is run in "user" mode. It first searches the user's home folder at `$HOME/.config/pulse/default.pa`. If that file is not found, it'll use `/etc/pulse/default.pa`. 
+PulseAudio searches for it's configuration instructions in one of 2 places when PulseAudio is run in "user" mode. It first searches the user's home folder at `$HOME/.config/pulse/default.pa`. If that file is not found, it'll look for `/etc/pulse/default.pa`. 
 
 I added `$HOME/.config/pulse/default.pa` to include the Fe-Pi configuration as well additional configuration that allows TX/RX monitoring through the built-in sound interfaces.
 
@@ -36,7 +36,7 @@ The first line in `$HOME/.config/pulse/default.pa` is:
 
 	.include /etc/pulse/default.pa
 
-This tells PulseAudio to load the original `/etc/pulse/default.pa` that was installed as part of PulseAudio *before* we add our own Fe-Pi configuration. This should reduce the impact of future updates to the PulseAudio application on the Fe-Pi configuration.
+This tells PulseAudio to load the original `/etc/pulse/default.pa` that was installed as part of PulseAudio, *before* we add our own Fe-Pi configuration. This should reduce the impact of future updates to the PulseAudio application on the Fe-Pi configuration.
 
 The remainder of `$HOME/.config/pulse/default.pa` contains:
 
@@ -65,9 +65,9 @@ The next lines in `$HOME/.config/pulse/default.pa` are:
 	master="fepi-capture" channels=1 channel_map="mono" \
 	master_channel_map="front-right" remix=no
 
-This tells PulsAudio to create separate left and right channel playback (sink) and capture (source) virtual interfaces that we can tell [ALSA](https://alsa-project.org/wiki/Main_Page) to use for those ham radio applications like Direwolf, which can't use PulseAudio directly.
+This tells PulsAudio to create separate left and right channel playback (sink) and capture (source) virtual interfaces that we can tell ALSA to use for those ham radio applications like Direwolf that can't use PulseAudio directly.
 
-The next lines in `$HOME/.config/pulse/default.pa` are not related to the Fe-Pi.
+The next lines in `$HOME/.config/pulse/default.pa` are not related to the Fe-Pi:
 
 	# Create a stereo combined sink for the headphone and HDMI audio interfaces
 	# so we don't have to know which is active at any given time
@@ -90,7 +90,7 @@ Finally, the last lines in `$HOME/.config/pulse/default.pa` are:
 	master="system-audio-playback" channels=1 channel_map="mono" \
 	master_channel_map="front-right" remix=no
 
-The above lines create separate sinks for the left and right radios. These sinks can be selected in Fldigi, for example, to send alerts from the left radio to the left channel of the built-in sound cards and alerts from the right radio to the right channel of the built-in sound cards. 
+The above lines create separate sinks for the left and right radios, corresponding to the left and right channels of the Pi's built in sound cards. These sinks can be selected in Fldigi, for example, to send alerts from the left radio to the left channel of the built-in sound cards and alerts from the right radio to the right channel of the built-in sound cards. 
 
 ### 3. Create virtual ALSA interfaces
 
@@ -99,33 +99,76 @@ Virtual ALSA interfaces are needed because some ham radio applications (like Dir
 Virtual ALSA interfaces are defined in `/etc/asound.conf`:
 
 	pcm.fepi-capture-left {
-	  type pulse
-	  device "fepi-capture-left"
+	   type pulse
+	   device "fepi-capture-left"
 	}
 	pcm.fepi-playback-left {
-	  type pulse
-	  device "fepi-playback-left"
+	   type pulse
+	   device "fepi-playback-left"
 	}
 	pcm.fepi-capture-right {
-	  type pulse
-	  device "fepi-capture-right"
+	   type pulse
+	   device "fepi-capture-right"
 	}
 	pcm.fepi-playback-right {
-	  type pulse
-	  device "fepi-playback-right"
+	   type pulse
+	   device "fepi-playback-right"
 	}
 	pcm.system-audio-playback {
-		type pulse
-		device "system-audio-playback"
+	   type pulse
+	   device "system-audio-playback"
 	}
 	pcm.system-audio-playback-left {
-		type pulse
-		device "system-audio-playback-left"
+	   type pulse
+	   device "system-audio-playback-left"
 	}
 	pcm.system-audio-playback-right {
-		type pulse
-		device "system-audio-playback-right"
+	   type pulse
+	   device "system-audio-playback-right"
 	}
+
+## How Ham Radio apps use PulseAudio
+
+When PulseAudio starts, it uses certain default interfaces for audio output and input. These defaults are marked with an asterisk when listing the sources (input) and sinks (output) with `pacmd` in the Terminal:
+
+	pi@nexus:~ $ pacmd list-sinks | grep -A1 "*"
+	  * index: 1
+		name: <alsa_output.platform-bcm2835_audio.analog-stereo>
+	pi@nexus:~ $ pacmd list-sources | grep -A1 "*"
+	  * index: 3
+		name: <fepi-capture>
+
+The source (audio input) default is the Fe-Pi, so that should be OK for ham radio applications like Fldigi. PulseAudio picked the Fe-Pi as the default source because there are no other sources. The built-in sound interfaces are sinks (output) only.
+
+However, the default sink (audio output) is the built-in analog (headphone) sound card. Clearly, that's not what we want for ham radio applications.  We need to send audio to the radio, not the Pi's built in sound card.
+
+First, some background. Fldigi uses PulseAudio directly. You simply check the __PulseAudio__ box in the __Configure > Config dialog > Soundcard > Devices:
+
+![Fldigi Soundcard Configuration](img/fldigi-soundcard.png)
+
+Note that there's no place in Fldigi to tell it to use a particular PulseAudio interface. So how does it work? The answer is to define [environment variables](https://linuxize.com/post/how-to-set-and-list-environment-variables-in-linux/).  When you click on __Raspberry > Hamradio > Fldigi (left-or-right radio)__, Nexus starts Fldigi like this:
+
+	PULSE_SINK=fepi-playback PULSE_SOURCE=fepi-capture fldigi ...
+
+The `PULSE_SINK` and `PULSE_SOURCE` environment variables tell PulseAudio that when Fldigi starts, don't use the PulseAudio defaults. Instead, use the Fe-Pi PulseAudio virtual audio cards for input and output audio. This allows other apps to  simultaneously use PulseAudio in the default way - through the built-in sound card.
+
+Remember that the Fe-Pi is a stereo sound card, and I defined `fepi-capture` and `fepi-playback` to be stereo as well in the `$HOME/.config/pulse/default.pa` file by specifying the stereo in/out profile. Fldigi has controls that allow you to tell it to use the left or right channels of a stereo sound card. So, for __Fldigi (left radio)__, the __Soundcard > Right channel__ settings look like this:
+
+![fldigi left soundcard settings](img/fldigi-soundcard-left.png)
+
+So, the left radio only uses the left channel.
+
+For the __Fldigi (right radio)__, the __Soundcard > Right channel__ settings look like this:
+
+![fldigi right soundcard settings](img/fldigi-soundcard-right.png)
+
+The boxes checked above tell fldigi (right radio) to use the right channel.
+
+This allows 2 instances of Fldigi, one on the left radio and one on the right, to run at the same time.
+
+Direwolf can't use PulseAudio. It requires access to the sound card. Remember `/etc/asound.conf` from earlier? That file defines virtual ALSA sound cards that use PulseAudio sound interfaces. So, we can select `fepi-capture-left` and `fepi-playback-left` as the sound cards for Direwolf.  Direwolf doesn't know or care that under the hood, PulseAudio is managing the audio.
+
+Generally, applications that cannot use PulseAudio directly can use the virtual ALSA devices.
 
 ## Adjust Audio Settings  
 
@@ -141,13 +184,13 @@ Some controls are in stereo.  The up and down arrows change the levels of both l
 	
 - Pressing __Z__ or __C__ decreases the left or right channel (radio) level respectively.
 
-1. Press __F6__ and select __1 Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
+1. Press __F6__ and select __Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
 are good starting points:
 ![Fe-Pi Audio Settings](img/fe-pi-settings.png)
 Leave the remaining settings as-is.  
 	
 	You will want to open `alsamixer` while running Fldigi and/or direwolf and adjust
-these settings on the __1 Fe-Pi Audio__ device as needed: 
+these settings on __Fe-Pi Audio__ as needed: 
 
 	- __Capture__ (for audio coming from the radio into the Pi - radio RX)  
 	- __PCM__ (for audio coming from the Pi to the radio - radio TX)
@@ -169,16 +212,17 @@ you can run this command to save the settings (choose your own file name/locatio
 
 		sudo alsactl --file ~/mysoundsettings1.state restore
 
-## (Optional) Monitor Radio's TX and/or RX audio on Pi's Speakers
+## Adjusting the Volume of the Built-In Sound Cards
 
-If you have speakers connected to the Pi, you can configure `pulseaudio` to monitor the audio to and/or from the radio
-
-The Pi's built-in sound interface can output audio to the audio jack on the board.  This is the __Analog__ output.  It can also send audio to HDMI-attached monitors that have built-in speakers.  This is the __HDMI__ output.  To toggle between __Analog__ and __HDMI__, right-click on the speaker icon on the menu bar. Select __AV Jack__ for audio out of the headphone jack built in to your Pi or __HDMI__ for audio sent to your audio-equipped monitor. 
+The Pi's built-in sound interface can output audio to the audio jack on the board.  This is the __Analog__ output.  It can also send audio to HDMI-attached monitors that have built-in speakers.  This is the __HDMI__ output.  To toggle between __Analog__ and __HDMI__, right-click on the speaker icon on the menu bar in the upper right corner. Select __AV Jack__ for audio out of the headphone jack built in to your Pi or __HDMI__ for audio sent to your audio-equipped monitor. 
 
 To adjust the level of the audio on your Pi's speakers, use the speaker's volume knob if it has one.  The speaker icon in the upper right of the Pi desktop also controls the Pi's speaker volume.  
 
-Another way is to adjust the volume in alsamixer (__0 bcm2835 HDMI__ device) or clicking the Raspberry icon on the desktop, select __Preferences > Audio Device Settings__.  Select the __1 bcm2835 Headphones__ sound card, and adjust the slider to your liking.  You may have to click the __Select Controls...__ button to enable the slider.
+Another way is to adjust the volume in alsamixer (__0 bcm2835 HDMI__ and __1 bcm2835 Headphones__ devices).  
 
+## (Optional) Monitor Radio's TX and/or RX audio on Pi's Speakers
+
+If you have speakers connected to the Pi, you can configure `pulseaudio` to monitor the audio to and/or from the radio.  Click __Raspberry > Hamradio > Start Radio RX Montitor or Start Radio TX Monitor__ from the menu. __Raspberry > Hamradio > Stop Radio TX and RX Monitors__ stops all the monitors.
 
 ### (Optional) Using Fldigi 4.1.09 (and later) Alerts, Notifications and RX Monitoring
 
@@ -221,4 +265,4 @@ Both `aplay` and `paplay` are installed by default in Raspbian Buster.
 
 5.3.3 Fldigi RX Monitoring
 
-Fldigi has built-in audio monitoring capability.  You can toggle RX monitoring on and off and apply filtering to the received audio by going __View > Rx Audio Dialog__.  The audio will be played through the built-in audio interface.  Don't forget to select __Analog__ or __HDMI__ output as described earlier.
+Fldigi has built-in audio monitoring capability.  You can toggle RX monitoring on and off and apply filtering to the received audio by going __View > Rx Audio Dialog__.  The audio will be played through the built-in audio interface.  Don't forget to select __Analog__ or __HDMI__ output as described earlier. Note that you must have Audio Alerts configured and enabled in Fldigi for this to work (__Configure > Config Dialog > Soundcard > Devices__).
