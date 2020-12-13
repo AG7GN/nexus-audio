@@ -1,5 +1,5 @@
 # Nexus DR-X Audio Configuration
-Version: 20201210  
+Version: 20201210.1  
 Author: Steve Magnuson, AG7GN  
 
 ## Introduction
@@ -178,7 +178,7 @@ Open a terminal and run:
 	alsamixer
 
 Press __F1__ for help familiarizing yourself with navigating the `alsamixer` interface.  
-Some controls are in stereo.  The up and down arrows change the levels of both left channels (for the left radio) and right (for the right radio).
+Some controls are in stereo.  The up and down arrows change the levels of both left (for the left radio) and right (for the right radio) channels.
       
 - Pressing __Q__ or __E__ increases the left or right channel (radio) level respectively. 
 	
@@ -186,8 +186,10 @@ Some controls are in stereo.  The up and down arrows change the levels of both l
 
 1. Press __F6__ and select __Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
 are good starting points:
-![Fe-Pi Audio Settings](img/fe-pi-settings.png)
-Leave the remaining settings as-is.  
+
+	![Fe-Pi Audio Settings](img/fe-pi-settings.png)
+
+	Leave the remaining settings as-is. Note that I've shown the left and right __PCM__ channels at different levels. This is to show that you can independently change the left and right channel levels. Different radios produce and require different audio levels, so some experimentation is needed to get the levels right. 
 	
 	You will want to open `alsamixer` while running Fldigi and/or direwolf and adjust
 these settings on __Fe-Pi Audio__ as needed: 
@@ -195,7 +197,9 @@ these settings on __Fe-Pi Audio__ as needed:
 	- __Capture__ (for audio coming from the radio into the Pi - radio RX)  
 	- __PCM__ (for audio coming from the Pi to the radio - radio TX)
 
-	Once you're happy with your audio settings, press __Esc__ to exit alsamixer.  
+	W6AF has published a [guide to setting FM audio levels](https://w6af.com/local-radio-activity/digital-modes/setting-up-sound-levels-for-fm-digital-operation/) using Fldigi that seems to work well for FM.  
+	
+	These 3 settings are at the bottom of the Fldigi window.	Once you're happy with your audio settings, press __Esc__ to exit alsamixer.  
 
 1. Save Audio Settings (not required)
 	
