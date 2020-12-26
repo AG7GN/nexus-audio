@@ -197,7 +197,11 @@ these settings on __Fe-Pi Audio__ as needed:
 	- __Capture__ (for audio coming from the radio into the Pi - radio RX)  
 	- __PCM__ (for audio coming from the Pi to the radio - radio TX)
 
-	W6AF has published a [guide to setting FM audio levels](https://w6af.com/local-radio-activity/digital-modes/setting-up-sound-levels-for-fm-digital-operation/) using Fldigi that seems to work well for FM.  
+	W6AF has published a [guide to setting FM audio levels](https://w6af.com/local-radio-activity/digital-modes/setting-up-sound-levels-for-fm-digital-operation/) using Fldigi that seems to work well for FM.
+	IMPORTANT: W6AF's instructions assume that you have the Fldigi waterfall settings set to default values, which are:
+	- Upper signal level (db): 0 
+	- Signal range (db): 60
+	- Tx level attenuator (db): -3
 	
 	These 3 settings are at the bottom of the Fldigi window.	Once you're happy with your audio settings, press __Esc__ to exit alsamixer.  
 
