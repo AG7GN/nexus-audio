@@ -1,8 +1,8 @@
 # Nexus DR-X Audio Configuration
-Version: 20201210.1  
+Version: 20201210.2  
 Author: Steve Magnuson, AG7GN  
 
-## Introduction
+## 1 Introduction
 
 Raspbian's embrace of PulseAudio as of early December 2020 brought significant changes to the way the Nexus DR-X sound is configured.
 
@@ -12,11 +12,11 @@ As of early December 2020, by default PulseAudio is configured to automatically 
 
 To rectify this, I finally arrived a solution that minimally affects the default PulseAudio configuration yet provides all the functionality we need to use the Fe-Pi audio card for ham radio applications.
 
-## PulseAudio Modifications to Support Fe-Pi
+## 2 PulseAudio Modifications to Support Fe-Pi
 
 Three modifications are needed for PulseAudio to support the Fe-Pi and retain it's normal PulseAudio operation.
 
-### 1. Tell PulseAudio to ignore the Fe-Pi when it's autodetecting audio interfaces
+### 2.1 Tell PulseAudio to ignore the Fe-Pi when it's autodetecting audio interfaces
 
 This is accomplished by adding a `/etc/udev/rules.d/89-pulseaudio-fepi.rules` file. This file has one line:
 
@@ -26,7 +26,7 @@ The `ATTRS{id}` looks for the string __Audio__. This ID is how the cards identif
 
 The `89` at the beginning of the file name is used to determine the order in which the rules are executed. PulseAudio's rules are stored in `/usr/lib/udev/rules.d/90-pulseaudio.rules` and `/usr/lib/udev/rules.d/91-pulseaudio-rpi.rules`. Note that rules installed as part of the application are stored in `/usr/lib/udev/rules.d/`. User rules are stored in `/etc/udev/rules.d/`.  Since our file starts with `89`, it is executed before regular PulseAudio rules, ensuring that PulseAudio will ignore the Fe-Pi.
 
-### 2. Manually configure the PulseAudio Fe-Pi settings
+### 2.2 Manually configure the PulseAudio Fe-Pi settings
 
 PulseAudio searches for it's configuration instructions in one of 2 places when PulseAudio is run in "user" mode. It first searches the user's home folder at `$HOME/.config/pulse/default.pa`. If that file is not found, it'll look for `/etc/pulse/default.pa`. 
 
@@ -92,7 +92,7 @@ Finally, the last lines in `$HOME/.config/pulse/default.pa` are:
 
 The above lines create separate sinks for the left and right radios, corresponding to the left and right channels of the Pi's built in sound cards. These sinks can be selected in Fldigi, for example, to send alerts from the left radio to the left channel of the built-in sound cards and alerts from the right radio to the right channel of the built-in sound cards. 
 
-### 3. Create virtual ALSA interfaces
+### 2.3 Create virtual ALSA interfaces
 
 Virtual ALSA interfaces are needed because some ham radio applications (like Direwolf) cannot use PulseAudio directly. The virtual ALSA interfaces use the PulseAudio sources/sinks we defined in `$HOME/.config/pulse/default.pa`.
 
@@ -127,7 +127,7 @@ Virtual ALSA interfaces are defined in `/etc/asound.conf`:
 	   device "system-audio-playback-right"
 	}
 
-## How Ham Radio apps use PulseAudio
+## 3 How Ham Radio apps use PulseAudio
 
 When PulseAudio starts, it uses certain default interfaces for audio output and input. These defaults are marked with an asterisk when listing the sources (input) and sinks (output) with `pacmd` in the Terminal:
 
@@ -170,7 +170,7 @@ Direwolf can't use PulseAudio. It requires access to the sound card. Remember `/
 
 Generally, applications that cannot use PulseAudio directly can use the virtual ALSA devices.
 
-## Adjust Audio Settings  
+## 4 Adjust Audio Settings  
 
 ### 4.1 Start `alsamixer`
 Open a terminal and run:
@@ -184,7 +184,7 @@ Some controls are in stereo.  The up and down arrows change the levels of both l
 	
 - Pressing __Z__ or __C__ decreases the left or right channel (radio) level respectively.
 
-1. Press __F6__ and select __Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
+- Press __F6__ and select __Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
 are good starting points:
 
 	![Fe-Pi Audio Settings](img/fe-pi-settings.png)
@@ -205,22 +205,25 @@ these settings on __Fe-Pi Audio__ as needed:
 	
 	These 3 settings are at the bottom of the Fldigi window.	Once you're happy with your audio settings, press __Esc__ to exit alsamixer.  
 
-1. Save Audio Settings (not required)
-	
-	These audio settings should save automatically, but for good measure you can store them again by running:
+### 4.2 Save Audio Settings (not required)
+These audio settings should save automatically, but for good measure you can store them again by running:
 
 		sudo alsactl store
 
-	If you want to save different audio level settings for different scenarios, 
-you can run this command to save the settings (choose your own file name/location):
+If you want to save different audio level settings for different scenarios, 
+you can run this command to save the settings (__choose your own file name/location__):
 
-		sudo alsactl --file ~/mysoundsettings1.state store
+		sudo alsactl --file $HOME/mysoundsettings1.state store
 
-	...and this command to restore those settings:
+...and this command to restore those settings:
 
-		sudo alsactl --file ~/mysoundsettings1.state restore
+		sudo alsactl --file $HOME/mysoundsettings1.state restore
+		
+If you want to use these settings when the Pi boots, add this line to your crontab (run `crontab -e` to edit your crontab):
+	
+		@reboot [ -s $HOME/mysoundsettings1.state ] && sudo alsactl --file $HOME/mysoundsettings1.state restore >/dev/null 2>&1
 
-## Adjusting the Volume of the Built-In Sound Cards
+### 4.3 Adjusting the Volume of the Built-In Sound Cards
 
 The Pi's built-in sound interface can output audio to the audio jack on the board.  This is the __Analog__ output.  It can also send audio to HDMI-attached monitors that have built-in speakers.  This is the __HDMI__ output.  To toggle between __Analog__ and __HDMI__, right-click on the speaker icon on the menu bar in the upper right corner. Select __AV Jack__ for audio out of the headphone jack built in to your Pi or __HDMI__ for audio sent to your audio-equipped monitor. 
 
@@ -228,15 +231,15 @@ To adjust the level of the audio on your Pi's speakers, use the speaker's volume
 
 Another way is to adjust the volume in alsamixer (__0 bcm2835 HDMI__ and __1 bcm2835 Headphones__ devices).  
 
-## (Optional) Monitor Radio's TX and/or RX audio on Pi's Speakers
+## 5 (Optional) Monitor Radio's TX and/or RX audio on Pi's Speakers
 
 If you have speakers connected to the Pi, you can configure `pulseaudio` to monitor the audio to and/or from the radio.  Click __Raspberry > Hamradio > Start Radio RX Montitor or Start Radio TX Monitor__ from the menu. __Raspberry > Hamradio > Stop Radio TX and RX Monitors__ stops all the monitors.
 
-### (Optional) Using Fldigi 4.1.09 (and later) Alerts, Notifications and RX Monitoring
+## 6 (Optional) Using Fldigi 4.1.09 (and later) Alerts, Notifications and RX Monitoring
 
 Fldigi version 4.1.09 introduced the ability to control where alerts, notifications and monitoring audio is sent.  Obviously, you don't want to send that audio to the radio so having the ability to control where it goes is important.
 
-5.3.1 Fldigi Alerts
+### 6.1 Fldigi Alerts
 
 Note that Fldigi [Alerts](http://www.w1hkj.com/FldigiHelp/audio_alerts_page.html) won't work for FSQ because it only looks in the signal browser for any text you specify in the alert.
 
@@ -247,7 +250,7 @@ The sound interface used for Alerts and RX Monitoring is set in __Configure > Co
 
 All alerts will now play through the Pi's built-in sound interface.  Don't forget to select __Analog__ or __HDMI__ output as described earlier.
 
-5.3.2 Fldigi Notifications
+### 6.2 Fldigi Notifications
 
 Unlike Alerts, Fldigi [Notifications](http://www.w1hkj.com/FldigiHelp/notifier_page.html) can look for text in Fldigi's Receive Messages pane.  To set up an audio alert in Fldigi, open __Configure > Notifications__ 
 
@@ -271,6 +274,6 @@ Use this command list the audio formats `paplay` supports:
 
 Both `aplay` and `paplay` are installed by default in Raspbian Buster.
 
-5.3.3 Fldigi RX Monitoring
+### 6.3 Fldigi RX Monitoring
 
 Fldigi has built-in audio monitoring capability.  You can toggle RX monitoring on and off and apply filtering to the received audio by going __View > Rx Audio Dialog__.  The audio will be played through the built-in audio interface.  Don't forget to select __Analog__ or __HDMI__ output as described earlier. Note that you must have Audio Alerts configured and enabled in Fldigi for this to work (__Configure > Config Dialog > Soundcard > Devices__).
