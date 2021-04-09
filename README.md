@@ -142,7 +142,7 @@ The source (audio input) default is the Fe-Pi, so that should be OK for ham radi
 
 However, the default sink (audio output) is the built-in analog (headphone) sound card. Clearly, that's not what we want for ham radio applications.  We need to send audio to the radio, not the Pi's built in sound card.
 
-First, some background. Fldigi uses PulseAudio directly. You simply check the __PulseAudio__ box in the __Configure > Config dialog > Soundcard > Devices:
+First, some background. Fldigi uses PulseAudio directly. You simply check the __PulseAudio__ box in __Configure > Config dialog > Soundcard > Devices__:
 
 ![Fldigi Soundcard Configuration](img/fldigi-soundcard.png)
 
@@ -178,18 +178,21 @@ Open a terminal and run:
 	alsamixer
 
 Press __F1__ for help familiarizing yourself with navigating the `alsamixer` interface.  
-Some controls are in stereo.  The up and down arrows change the levels of both left (for the left radio) and right (for the right radio) channels.
+Some controls are in stereo.  The up and down arrows change the levels of both left (for the left radio) and right (for the right radio) channels. The left and right arrows selects the control.
       
 - Pressing __Q__ or __E__ increases the left or right channel (radio) level respectively. 
 	
 - Pressing __Z__ or __C__ decreases the left or right channel (radio) level respectively.
 
-- Press __F6__ and select __Fe-Pi Audio__ from the list.   For the Fe-Pi, these levels 
-are good starting points:
+- Press __F6__ and select __Fe-Pi Audio__ from the list. 
+
+- Press __F5__ to see all audio controls.  
+
+	The blue box in the screenshot below shows the controls for output (to the radio) audio levels and the orange box shows the controls for input (from the radio) audio levels. For the Fe-Pi, these levels are good starting points.
 
 	![Fe-Pi Audio Settings](img/fe-pi-settings.png)
 
-	Leave the remaining settings as-is. Note that I've shown the left and right __PCM__ channels at different levels. This is to show that you can independently change the left and right channel levels. Different radios produce and require different audio levels, so some experimentation is needed to get the levels right. 
+	Leave the remaining settings as-is. Note that I've shown the left and right __PCM__ channels and the __L R CAPTURE__ settings at different levels. This is to show that you can independently change the left and right channel levels. Different radios produce and require different audio levels, so some experimentation is needed to get the levels right. 
 	
 	You will want to open `alsamixer` while running Fldigi and/or direwolf and adjust
 these settings on __Fe-Pi Audio__ as needed: 
