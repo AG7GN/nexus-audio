@@ -188,7 +188,9 @@ Some controls are in stereo.  The up and down arrows change the levels of both l
 
 - Press __F5__ to see all audio controls.  
 
-	The blue box in the screenshot below shows the controls for output (to the radio) audio levels and the orange box shows the controls for input (from the radio) audio levels. For the Fe-Pi, these levels are good starting points.
+- Pay attention to the __Capture Attenuate Switch__ control (the control to the right of __L R CAPTURE__ as shown in the screenshot below). I find that my radios produce audio that is too 'hot' and so I have to enable this switch to add 6db of attenuation to the incoming levels. To enable the attenuation, set this control to __00__ and to disable it set it to __MM__.
+
+	The blue box in the screenshot below shows the controls for output (to the radio) audio levels and the orange box shows the controls for input (from the radio) audio levels. For the Fe-Pi, these levels are good starting points. I found that leaving the __Lineout__ control at 100 and adjusting __PCM__ levels as needed worked best.
 
 	![Fe-Pi Audio Settings](img/fe-pi-settings.png)
 
@@ -197,7 +199,7 @@ Some controls are in stereo.  The up and down arrows change the levels of both l
 	You will want to open `alsamixer` while running Fldigi and/or direwolf and adjust
 these settings on __Fe-Pi Audio__ as needed: 
 
-	- __Capture__ (for audio coming from the radio into the Pi - radio RX)  
+	- __L R Capture__ and maybe the __Capture Attenuate Switch__ (for audio coming from the radio into the Pi - radio RX)  
 	- __PCM__ (for audio coming from the Pi to the radio - radio TX)
 
 	W6AF has published a [guide to setting FM audio levels](https://w6af.com/local-radio-activity/digital-modes/setting-up-sound-levels-for-fm-digital-operation/) using Fldigi that seems to work well for FM.
