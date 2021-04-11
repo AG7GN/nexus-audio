@@ -211,12 +211,13 @@ these settings on __Fe-Pi Audio__ as needed:
 	These 3 settings are at the bottom of the Fldigi window.	Once you're happy with your audio settings, press __Esc__ to exit alsamixer.  
 
 ### 4.2 Save Audio Settings (not required)
+
 These audio settings should save automatically, but for good measure you can store them again by running:
 
 		sudo alsactl store
 
 If you want to save different audio level settings for different scenarios, 
-you can run this command to save the settings (__choose your own file name/location__):
+you can run this command to save the settings (__choose your own file name/location__)...
 
 		sudo alsactl --file $HOME/mysoundsettings1.state store
 
@@ -224,9 +225,9 @@ you can run this command to save the settings (__choose your own file name/locat
 
 		sudo alsactl --file $HOME/mysoundsettings1.state restore
 		
-If you want to use these settings when the Pi boots, add this line to your crontab (run `crontab -e` to edit your crontab):
-	
-		@reboot [ -s $HOME/mysoundsettings1.state ] && sudo alsactl --file $HOME/mysoundsettings1.state restore >/dev/null 2>&1
+If you want to restore the settings when the desktop launches, add the following line __BEFORE__  the `@xscreensaver` line in `/etc/xdg/lxsession/LXDE-pi/autostart`:
+
+		@sudo alsactl --file /home/pi/mysoundsettings1.state restore
 
 ### 4.3 Adjusting the Volume of the Built-In Sound Cards
 
